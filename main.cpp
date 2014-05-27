@@ -14,6 +14,7 @@ int main()
 	unsigned int nSamples = 10000;
         unsigned int dim = 20;
 	
+	unsigned int t = 1;
 	unsigned int lat = 190;
 	unsigned int lon = 384;
 	unsigned int start = 1985;
@@ -24,32 +25,41 @@ int main()
 	
 	//netCDF fileit and data var
 	int ncid, varid;
-	
 	char *varname = "TMP_2maboveground";
-	int data_in[lat][lon];
 	//loop inds and error_handling
-	int x, y, retval;
-		
+	int ld, la, ln, retval;
+	
+	//contains data_in
+	float *data_in, *data;	
 	
 	/** Open the file. NC_NOWRITE tells netCDF 
   	we want read-only access  to the file.*/
-  	if((retval = nc_open(filename, NC_NOWRITE, &ncid)))		ERR(retval);		
+  	if((retval = nc_open(filename, NC_NOWRITE, &ncid)))		
+		ERR(retval);		
 	
 	/** Get the varid of the data variable, 
  	    based on its name. */
-   	if ((retval = nc_inq_varid(ncid, varname, &varid))){
-      		//ERR(retval);
-   		printf("var name: %d\n", varid);
+   	if ((retval = nc_inq_varid(ncid, varname, &varid)))
 		ERR(retval);
-	}	
+
+
+	
+	
+  	/*  Allocate enough space.. */	
+  	data_in = (float *)malloc(sizeof(float)*t*lat*lon);
+	
 	/* Read the data. */	
-   	if ((retval = nc_get_var_int(ncid, varid, &data_in[0][0])))
+   	if ((retval = nc_get_var_float(ncid, varid, data_in)))
       	ERR(retval);
 
-   	/* Check the data. */
-  	 for (x = 0; x < lat; x++)
-      		for (y = 0; y < lon; y++)
-	 		printf("%f", data_in[x,y]);
+   	/* print out data for sanity check */
+	ld = 0;
+	for(la=0; la<lat; la++){
+		for (ln=0; ln<lon; ln++){
+			printf("[%03d, %03d] = %f\n", la, ln, data_in[ld]);
+			ld++;
+		}
+	}
 
    	/* Close the file, freeing all resources. */
    	if ((retval = nc_close(ncid)))
