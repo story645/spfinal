@@ -12,25 +12,26 @@
 
 void testall(float *data, unsigned int nSamples, unsigned int dim)
 {
-	unsigned int nQueries = 20000;
-	unsigned int K = 250;
+	unsigned int nQueries = rand()%nSamples;
+	unsigned int K = 4;
 	
 	float* query = NULL;
 	unsigned int* KNNResult = NULL;
 	unsigned int* KNNResult_query = NULL;
-	CPUMALLOC((void**)&data, sizeof(float) * nSamples * dim);
+	
 	CPUMALLOC((void**)&query, sizeof(float) * nQueries * dim);
 	CPUMALLOC((void**)&KNNResult, sizeof(unsigned int) * nSamples * K);
 	CPUMALLOC((void**)&KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	
-	for(unsigned int i = 0; i < nSamples * dim; ++i)
+	//pick random years
+	unsigned int init;
+	for(unsigned int i = 0; i < nQueries; ++i)
 	{
-		data[i] = rand() / (RAND_MAX + 1.0f);
-	}
-	
-	for(unsigned int i = 0; i < nQueries * dim; ++i)
-	{
-		query[i] = rand() / (RAND_MAX + 1.0f);
+		init = (rand() % nSamples)*dim;
+		for(unsigned int j=init; j<(j+dim); j++){
+			query[j-init] = data[j];
+			printf("%d\n", j);
+		}	
 	}
 	
 	float* d_data = NULL;
@@ -46,7 +47,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim)
 	TOGPU(d_query, query, sizeof(float) * nQueries * dim);
 
 
-    	if(BS)
+    	if(BS)	
 	{
 		//data points self query using radixsort
 

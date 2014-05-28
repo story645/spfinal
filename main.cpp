@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <netcdf.h>
+#include <cudpp.h>
+#include <cutil.h>
 
 #include "cuda_test.h"
 #include "cpu_test.h"
@@ -29,9 +31,8 @@ int main()
         unsigned int dim = tsamples * LAT * LON;
 
 	char filename[23];
-	float *data_in, *data;
-	data = (float *)malloc(sizeof(float)*nSamples*dim);	
-
+	float *data = NULL;
+	CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);	
 	printf("%d\n", nSamples*dim);
  
 	int moffset, yoffset, foffset;
@@ -57,16 +58,10 @@ int main()
         	}	
 	}	
 	assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
-	for (int j = 0; j<nSamples*dim; j++)
-		printf("%.2f ", data[j]);
 
 	/*  Allocate enough space.. */
-        //float *data_in, *data;	
-	
-	//data_in = (float *)malloc(sizeof(float)*TIME*LAT*LON);
-
-	//testall(data, nSamples, dim);
-        //test_kdtree(data, nSamples, dim);
+	testall(data, nSamples, dim);
+       // test_kdtree(data, nSamples, dim);
 	return 0;
 }
 
