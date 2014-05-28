@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netcdf.h>
@@ -9,28 +10,73 @@
 #define ERRCODE 2
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); exit(ERRCODE);}
 
+#define TIME 1
+#define LAT 190
+#define LON 384
+#define VARNAME "TMP_2maboveground"
+
+void unpack_data(char *filename, float *data_in);
+
 int main()
 {
-	unsigned int nSamples = 10000;
-        unsigned int dim = 20;
 	
-	unsigned int t = 1;
-	unsigned int lat = 190;
-	unsigned int lon = 384;
 	unsigned int start = 1985;
 	unsigned int end = 2009;
-	unsigned int time = ((end-start) + 1)*12; 
+	unsigned int tsamples = ((end-start) + 1)*12; 
+	unsigned int nf = 9;
 	
-	char *filename = "../data/TMP_198501_a.nc";
+	unsigned int nSamples = 10;
+        unsigned int dim = tsamples * LAT * LON;
+
+	char filename[23];
+	float *data_in, *data;
+	data = (float *)malloc(sizeof(float)*nSamples*dim);	
+
+	printf("%d\n", nSamples*dim);
+ 
+	int moffset, yoffset, foffset;
+	for (int y =start; y<=end; y++){
+		yoffset = (LAT*LON*12) * (y-start);
+		for (int m = 1; m<=12; m++){
+			sprintf(filename, "../data/TMP_%d%02d_a.nc", y, m);
+			moffset = LAT*LON*(m-1);
+			unpack_data(filename, (data+yoffset+moffset)); 
+		}
+	}
+
+	char ffilename[25];
+	for (int f = 1; f<=9; f++){
+		foffset = dim*f;	
+		for (int y =start; y<=end; y++){
+			yoffset = (LAT*LON*12) * (y-start);
+        	 	for (int m = 1; m<=12; m++){
+                		sprintf(ffilename, "../data/TMP_%d%02d_f%02d.nc", y, m, f);
+				moffset = LAT*LON*(m-1);
+				unpack_data(ffilename, (data+(foffset+yoffset+moffset)));
+    	            }	
+        	}	
+	}	
+	assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
+	for (int j = 0; j<nSamples*dim; j++)
+		printf("%.2f ", data[j]);
+
+	/*  Allocate enough space.. */
+        //float *data_in, *data;	
 	
+	//data_in = (float *)malloc(sizeof(float)*TIME*LAT*LON);
+
+	//testall(data, nSamples, dim);
+        //test_kdtree(data, nSamples, dim);
+	return 0;
+}
+
+	
+void unpack_data(char *filename, float *data_in){
 	//netCDF fileit and data var
 	int ncid, varid;
-	char *varname = "TMP_2maboveground";
+
 	//loop inds and error_handling
 	int ld, la, ln, retval;
-	
-	//contains data_in
-	float *data_in, *data;	
 	
 	/** Open the file. NC_NOWRITE tells netCDF 
   	we want read-only access  to the file.*/
@@ -39,38 +85,17 @@ int main()
 	
 	/** Get the varid of the data variable, 
  	    based on its name. */
-   	if ((retval = nc_inq_varid(ncid, varname, &varid)))
+   	if ((retval = nc_inq_varid(ncid, VARNAME, &varid)))
 		ERR(retval);
-
-
-	
-	
-  	/*  Allocate enough space.. */	
-  	data_in = (float *)malloc(sizeof(float)*t*lat*lon);
 	
 	/* Read the data. */	
    	if ((retval = nc_get_var_float(ncid, varid, data_in)))
-      	ERR(retval);
-
-   	/* print out data for sanity check */
-	ld = 0;
-	for(la=0; la<lat; la++){
-		for (ln=0; ln<lon; ln++){
-			printf("[%03d, %03d] = %f\n", la, ln, data_in[ld]);
-			ld++;
-		}
-	}
+      		ERR(retval);	
 
    	/* Close the file, freeing all resources. */
    	if ((retval = nc_close(ncid)))
      		 ERR(retval);
 
    	printf("*** SUCCESS reading %s!\n", filename);
-
-	
-	//testall(data, nSamples, dim);
-	//test_kdtree(data, nSamples, dim);
-
-	
 }
 
