@@ -18,7 +18,6 @@
 #define VARNAME "TMP_2maboveground"
 
 void unpack_data(char *filename, float *data_in);
-
 int main()
 {
 	
@@ -27,15 +26,21 @@ int main()
 	unsigned int tsamples = ((end-start) + 1)*12; 
 	unsigned int nf = 9;
 	
-	unsigned int nSamples = 10;
-        unsigned int dim = tsamples * LAT * LON;
+	unsigned int dim = 9;
+        unsigned int nSamples = tsamples * LAT * LON;
 
 	char filename[23];
 	float *data = NULL;
+	float *dataT = NULL;
 	CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);	
+	CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
+
 	printf("%d\n", nSamples*dim);
- 
+
+	
 	int moffset, yoffset, foffset;
+	/**
+ 	char filename[23];
 	for (int y =start; y<=end; y++){
 		yoffset = (LAT*LON*12) * (y-start);
 		for (int m = 1; m<=12; m++){
@@ -44,10 +49,11 @@ int main()
 			unpack_data(filename, (data+yoffset+moffset)); 
 		}
 	}
+	**/
 
 	char ffilename[25];
 	for (int f = 1; f<=9; f++){
-		foffset = dim*f;	
+		foffset = nSamples*(f-1);	
 		for (int y =start; y<=end; y++){
 			yoffset = (LAT*LON*12) * (y-start);
         	 	for (int m = 1; m<=12; m++){
@@ -58,9 +64,13 @@ int main()
         	}	
 	}	
 	assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
-
+	//Transpose
+	//http://stackoverflow.com/a/16743203/1267531	
+	for(int n=0; n<(nSamples*dim); n++){
+		dataT[n] = data[nSamples*(n%dim) +(n/dim)];
+	}
 	/*  Allocate enough space.. */
-	testall(data, nSamples, dim);
+	testall(dataT, nSamples, dim);
        // test_kdtree(data, nSamples, dim);
 	return 0;
 }
