@@ -25,12 +25,13 @@ void testall(float *data, unsigned int nSamples, unsigned int dim)
 	
 	//pick random years
 	unsigned int init;
+	int k = 0;
 	for(unsigned int i = 0; i < nQueries; ++i)
 	{
 		init = (rand() % nSamples)*dim;
 		for(unsigned int j=init; j<(j+dim); j++){
-			query[j-init] = data[j];
-			printf("%d\n", j);
+			query[k] = data[j];
+			k++;
 		}	
 	}
 	
