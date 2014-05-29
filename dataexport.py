@@ -34,5 +34,6 @@ if __name__ == '__main__':
 			d = extract_data(filename, VAR)
 			data.append(d.flatten())
 			all_data.append(np.vstack(data).T)
-		np.savetxt(df, np.vstack(all_data).flatten(), fmt='%f4')
-
+		#np.savetxt(df, np.vstack(all_data).flatten(), fmt='%f4')
+	darr = np.vstack(all_data)
+	print darr.min(), darr.max()

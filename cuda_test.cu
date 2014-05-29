@@ -10,10 +10,13 @@
 #define LSH 1
 #define RESULT 0
 
-void testall(float *data, unsigned int nSamples, unsigned int dim)
+void testall(float *data, unsigned int nSamples, unsigned int dim, 
+		unsigned int dmin, unsigned int dmax)
 {
-	unsigned int nQueries = rand()%nSamples;
-	unsigned int K = 4;
+	unsigned int nQueries = nSamples*.20;
+	unsigned int K = 250;
+	printf("nSamples=%d, nQueries=%d, dims=%d, K=%d\n", 
+		nSamples, nQueries, dim, K);
 	
 	float* query = NULL;
 	unsigned int* KNNResult = NULL;
@@ -23,16 +26,16 @@ void testall(float *data, unsigned int nSamples, unsigned int dim)
 	CPUMALLOC((void**)&KNNResult, sizeof(unsigned int) * nSamples * K);
 	CPUMALLOC((void**)&KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	
-	//pick random years
+	//pick random samples for the queries
 	unsigned int init;
-	int k = 0;
-	for(unsigned int i = 0; i < nQueries; ++i)
+	unsigned int qi = 0;
+	for(unsigned int q = 0; q < nQueries; q++)
 	{
 		init = (rand() % nSamples)*dim;
-		for(unsigned int j=init; j<(j+dim); j++){
-			query[k] = data[j];
-			k++;
-		}	
+		for(unsigned int di=init; di<(init+dim); di++){
+			query[qi] = data[di];
+			qi++;
+		}
 	}
 	
 	float* d_data = NULL;
@@ -105,8 +108,8 @@ void testall(float *data, unsigned int nSamples, unsigned int dim)
 		
 		for(unsigned int i = 0; i < dim; ++i)
 		{
-			h_upper[i] = 1;
-			h_lower[i] = 0;
+			h_upper[i] = dmax;
+			h_lower[i] = dmin;
 		}
 		
 		int LSH_L = 5;
@@ -159,7 +162,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim)
 	
 	GPUFREE(d_data);
 	GPUFREE(d_KNNResult);
-	CPUFREE(data);
+	//CPUFREE(data);
 	CPUFREE(KNNResult);
 	
 	GPUFREE(d_query);

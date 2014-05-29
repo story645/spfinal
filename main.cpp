@@ -16,6 +16,8 @@
 #define LAT 190
 #define LON 384
 #define VARNAME "TMP_2maboveground"
+#define DMIN 205
+#define DMAX 320
 
 void unpack_data(char *filename, float *data_in);
 int main()
@@ -38,7 +40,7 @@ int main()
 	printf("%d\n", nSamples*dim);
 
 	
-	int moffset, yoffset, foffset;
+	unsigned int moffset, yoffset, foffset;
 	/**
  	char filename[23];
 	for (int y =start; y<=end; y++){
@@ -52,11 +54,11 @@ int main()
 	**/
 
 	char ffilename[25];
-	for (int f = 1; f<=9; f++){
+	for (unsigned int f = 1; f<=9; f++){
 		foffset = nSamples*(f-1);	
-		for (int y =start; y<=end; y++){
+		for (unsigned int y =start; y<=end; y++){
 			yoffset = (LAT*LON*12) * (y-start);
-        	 	for (int m = 1; m<=12; m++){
+        	 	for (unsigned int m = 1; m<=12; m++){
                 		sprintf(ffilename, "../data/TMP_%d%02d_f%02d.nc", y, m, f);
 				moffset = LAT*LON*(m-1);
 				unpack_data(ffilename, (data+(foffset+yoffset+moffset)));
@@ -66,11 +68,13 @@ int main()
 	assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
 	//Transpose
 	//http://stackoverflow.com/a/16743203/1267531	
-	for(int n=0; n<(nSamples*dim); n++){
+	for(unsigned int n=0; n<(nSamples*dim); n++){
 		dataT[n] = data[nSamples*(n%dim) +(n/dim)];
 	}
+	CPUFREE(data);
 	/*  Allocate enough space.. */
-	testall(dataT, nSamples, dim);
+	testall(dataT, nSamples, dim, DMIN, DMAX);
+	CPUFREE(dataT);
        // test_kdtree(data, nSamples, dim);
 	return 0;
 }
@@ -101,6 +105,6 @@ void unpack_data(char *filename, float *data_in){
    	if ((retval = nc_close(ncid)))
      		 ERR(retval);
 
-   	printf("*** SUCCESS reading %s!\n", filename);
+   	//printf("*** SUCCESS reading %s!\n", filename);
 }
 
