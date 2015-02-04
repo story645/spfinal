@@ -7,8 +7,9 @@
 #include "cuda_test.h"
 
 
-void testall(float *data, uint nSamples, uint dim, uint dmin, uint
-dmax, uint BS, uint LSH, uint RESULT)
+void testall(float *data, unsigned int nSamples, unsigned int dim, 
+             unsigned int dmin, unsigned int dmax, 
+	     unsigned int BS, unsigned int LSH, unsigned int RESULT)
 {
 	unsigned int nQueries = nSamples*.20;
 	unsigned int K = 250;
@@ -53,113 +54,16 @@ dmax, uint BS, uint LSH, uint RESULT)
 	TOGPU(d_query, query, sizeof(float) * nQueries * dim);
 
 
-    	if(BS)
-	{
-		//data points self query using radixsort
-
-		unsigned int timer3 = 0;
-		startTimer(&timer3);
-		
-		proximityComputation_bruteforce2(d_data, nSamples, d_data, nSamples, dim, K, 0.0f, d_KNNResult);	
-		FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
-		endTimer("brute-force KNN -  data points self query- using radixsort", &timer3);	
-
-		if(RESULT)
-		{
-			FILE* file3 = fopen("knn_bf2.txt", "w");
-			for(unsigned int i = 0; i < nSamples; ++i)
-			{
-				for(unsigned int j = 0; j < K; ++j)
-				{
-					fprintf(file3, "%d ", KNNResult[j * nSamples + i]);
-				}
-				fprintf(file3, "\n");
-			}
-			fclose(file3);
-		}
-		
-		//separate data/query points using radixsort		
-		unsigned int timer4 = 0;
-		startTimer(&timer4);
-		
-		proximityComputation_bruteforce2(d_data, nSamples, d_query, nQueries, dim, K, 0.0f, d_KNNResult_query);
-		FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
-		endTimer("brute-force KNN - separate data/query points - using radixsort", &timer4);
-		
-		if(RESULT)
-		{
-			FILE* file4 = fopen("knn_query_bf2.txt", "w");
-			for(unsigned int i = 0; i < nQueries; ++i)
-			{
-				for(unsigned int j = 0; j < K; ++j)
-				{
-					fprintf(file4, "%d ", KNNResult_query[j * nQueries + i]);
-				}
-				fprintf(file4, "\n");
-			}
-			fclose(file4);
-		}		
+    	if(BS){
+	bruteforce(K, dim, nSamples, nQueries, d_data, d_query,
+	           KNNResult, d_KNNResult, KNNResult_query,
+		   d_KNNResult_query, RESULT);
 	}
 
-	if(LSH )
-	{
-		float* h_lower = NULL;
-		float* h_upper = NULL;
-		CPUMALLOC((void**)&h_lower, sizeof(float) * dim);
-		CPUMALLOC((void**)&h_upper, sizeof(float) * dim);
-		
-		for(unsigned int i = 0; i < dim; ++i)
-		{
-			h_upper[i] = 1;
-			h_lower[i] = 0;
-		}
-		
-		int LSH_L = 5;
-
-		//data points self query
-		unsigned int timer1 = 0;
-		startTimer(&timer1);
-		
-		proximityComputation_LSH(d_data, nSamples, d_data, nSamples, dim, K, LSH_L, 0.0f, h_upper, h_lower, d_KNNResult);
-		FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
-		endTimer("LSH KNN -data point self query", &timer1);
-		
-		if(RESULT)
-		{
-			FILE* file1 = fopen("knn_lsh.txt", "w");
-			for(unsigned int i = 0; i < nSamples; ++i)
-			{
-				for(unsigned int j = 0; j < K; ++j)
-				{
-					fprintf(file1, "%d ", KNNResult[j * nSamples + i]);
-				}
-				fprintf(file1, "\n");
-			}
-			fclose(file1);
-		}
-	
-	
-		unsigned int timer2 = 0;
-		startTimer(&timer2);
-		proximityComputation_LSH(d_data, nSamples, d_query, nQueries, dim, K, LSH_L, 0.0f, h_upper, h_lower, d_KNNResult_query);
-		FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
-		endTimer("LSH KNN - separte data/query points", &timer2);
-
-		if(RESULT)
-		{
-			FILE* file2 = fopen("knn_query_lsh.txt", "w");
-			for(unsigned int i = 0; i < nQueries; ++i)
-			{
-				for(unsigned int j = 0; j < K; ++j)
-				{
-					fprintf(file2, "%d ", KNNResult_query[j * nQueries + i]);
-				}
-				fprintf(file2, "\n");
-			}
-			fclose(file2);
-		}		
-		CPUFREE(h_lower);
-		CPUFREE(h_upper);		
+	if(LSH ){
+	locsenhash(K, dim, nSamples, nQueries, d_data, d_query,
+                   KNNResult, d_KNNResult, KNNResult_query,
+                   d_KNNResult_query, RESULT);
 	}
 	
 	GPUFREE(d_data);
@@ -172,5 +76,82 @@ dmax, uint BS, uint LSH, uint RESULT)
 	CPUFREE(query);
 	CPUFREE(KNNResult_query);
 	
+}
+
+
+void bruteforce(unsigned int K, unsigned int dim, 
+                unsigned int nSamples, unsigned int nQueries, 
+		float* d_data, float* d_query, 
+		unsigned int* KNNResult, unsigned int* d_KNNResult, 
+		unsigned int* KNNResult_query, unsigned int* d_KNNResult_query, 
+		unsigned int RESULT){
+      //data points self query using radixsort
+      unsigned int timer3 = 0;
+      startTimer(&timer3);
+      proximityComputation_bruteforce2(d_data, nSamples, d_data, nSamples,
+      dim, K, 0.0f, d_KNNResult);
+      FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
+      endTimer("brute-force KNN - data points self query- using radixsort", &timer3);
+      if(RESULT){printResults("knn_bf2.txt", KNNResult, nSamples, K);}
+	
+	
+      //separate data/query points using radixsort	 
+      unsigned int timer4 = 0;
+      startTimer(&timer4);
+      proximityComputation_bruteforce2(d_data, nSamples, d_query, nQueries,
+      dim, K, 0.0f, d_KNNResult_query);
+      FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
+      endTimer("brute-force KNN - separate data/query points - using radixsort", &timer4);
+      if(RESULT){printResults("knn_query_bf2.txt", KNNResult_query, nQueries, K);}
+}
+
+void locsenhash(unsigned int K, unsigned int dim,
+            unsigned int nSamples, unsigned int nQueries,
+	    float* d_data, float* d_query,
+	    unsigned int* KNNResult, unsigned int* d_KNNResult,
+            unsigned int* KNNResult_query, unsigned int* d_KNNResult_query, 
+	    unsigned int RESULT){
+	    
+	    float* h_lower = NULL;
+	    float* h_upper = NULL;
+	    CPUMALLOC((void**)&h_lower, sizeof(float) * dim);
+	    CPUMALLOC((void**)&h_upper, sizeof(float) * dim);
+	    for(unsigned int i = 0; i < dim; ++i){
+	    		 h_upper[i] = 1;
+	    		 h_lower[i] = 0;
+	    }
+	    int LSH_L = 5;
+	    
+	    //data points self query
+	    unsigned int timer1 = 0;
+	    startTimer(&timer1);
+	    proximityComputation_LSH(d_data, nSamples, d_data,
+	    				     nSamples, dim, K, LSH_L, 0.0f, h_upper, h_lower, d_KNNResult);
+	    FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
+	    endTimer("LSH KNN -data point self query", &timer1);
+	    if(RESULT){printResults("knn_lsh.txt", KNNResult, nSamples, K);}
+
+	    unsigned int timer2 = 0;
+	    startTimer(&timer2);
+	    proximityComputation_LSH(d_data, nSamples, d_query, nQueries, dim, K,
+	                              LSH_L, 0.0f, h_upper, h_lower, d_KNNResult_query);
+	    FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
+	    endTimer("LSH KNN - separte data/query points", &timer2);
+	    if(RESULT){printResults("knn_query_lsh.txt", KNNResult_query, nQueries, K);}
+
+	   CPUFREE(h_lower);
+	   CPUFREE(h_upper); 
+}
+	    
+void printResults(char *filename, unsigned int* output, 
+                  unsigned int nLines, unsigned int K){
+     FILE * fileout = fopen(filename, "w");
+     for(uint i =0; i<nLines; ++i){
+     	      for(uint j=0; j < K; ++j){
+     	      	       fprintf(fileout, "%d", output[j * nLines + i]);
+	      }	       
+     fprintf(fileout, "\n");
+     }
+     fclose(fileout);
 }
 

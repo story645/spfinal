@@ -24,10 +24,10 @@ int main(int argc, char *argv[])
 {
 	
 	int start = 1985;
-	int end = 2009;
+	int end = 1986;
+        //int end = 2009;
 	int tsamples = ((end-start) + 1)*12; 
 	int nf = 9;
-	
 	int dim = 9;
         int nSamples = tsamples * LAT * LON;
         int foffset, yoffset, moffset;
@@ -68,9 +68,9 @@ int main(int argc, char *argv[])
    
 	CPUFREE(data);
         /*  Allocate enough space.. */
-        uint LSH = 0;
-        uint BS = 0;
-        uint RESULT = 0;
+        unsigned int LSH = 0;
+        unsigned int BS = 0;
+        unsigned int RESULT = 0;
         if (argc>1){LSH = atoi(argv[1]);}
         if (argc>2){BS = atoi(argv[2]);}
         if (argc>3){RESULT = atoi(argv[3]);}
