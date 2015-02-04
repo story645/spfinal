@@ -6,37 +6,39 @@
 #include <time.h>
 #include "cuda_test.h"
 
-#define BS 1
-#define LSH 1
-#define RESULT 0
 
-void testall(float *data, unsigned int nSamples, unsigned int dim, 
-		unsigned int dmin, unsigned int dmax)
+void testall(float *data, uint nSamples, uint dim, uint dmin, uint
+dmax, uint BS, uint LSH, uint RESULT)
 {
 	unsigned int nQueries = nSamples*.20;
 	unsigned int K = 250;
-	printf("nSamples=%d, nQueries=%d, dims=%d, K=%d\n", 
-		nSamples, nQueries, dim, K);
+	
+	printf("nSamples=%d, nQueries=%d, dims=%d, K=%d\n",
+	nSamples, nQueries, dim, K);
 	
 	float* query = NULL;
 	unsigned int* KNNResult = NULL;
 	unsigned int* KNNResult_query = NULL;
 	
+	
 	CPUMALLOC((void**)&query, sizeof(float) * nQueries * dim);
 	CPUMALLOC((void**)&KNNResult, sizeof(unsigned int) * nSamples * K);
 	CPUMALLOC((void**)&KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	
+	
+	
+	
 	//pick random samples for the queries
-	unsigned int init;
-	unsigned int qi = 0;
-	for(unsigned int q = 0; q < nQueries; q++)
-	{
-		init = (rand() % nSamples)*dim;
-		for(unsigned int di=init; di<(init+dim); di++){
-			query[qi] = data[di];
-			qi++;
-		}
+	uint init;
+	uint qi = 0;
+	for(uint q = 0; q < nQueries; q++){
+	     init = (rand() % nSamples)*dim;
+	     for(uint di=init; di<(init+dim); di++){
+	     query[qi] = data[di];
+	     qi++;
+	     }
 	}
+	
 	
 	float* d_data = NULL;
 	float* d_query = NULL;
@@ -51,7 +53,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 	TOGPU(d_query, query, sizeof(float) * nQueries * dim);
 
 
-    	if(BS)	
+    	if(BS)
 	{
 		//data points self query using radixsort
 
@@ -108,8 +110,8 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 		
 		for(unsigned int i = 0; i < dim; ++i)
 		{
-			h_upper[i] = dmax;
-			h_lower[i] = dmin;
+			h_upper[i] = 1;
+			h_lower[i] = 0;
 		}
 		
 		int LSH_L = 5;
@@ -162,7 +164,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 	
 	GPUFREE(d_data);
 	GPUFREE(d_KNNResult);
-	//CPUFREE(data);
+	CPUFREE(data);
 	CPUFREE(KNNResult);
 	
 	GPUFREE(d_query);

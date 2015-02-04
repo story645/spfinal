@@ -20,62 +20,66 @@
 #define DMAX 320
 
 void unpack_data(char *filename, float *data_in);
-int main()
+int main(int argc, char *argv[])
 {
 	
-	unsigned int start = 1985;
-	unsigned int end = 2009;
-	unsigned int tsamples = ((end-start) + 1)*12; 
-	unsigned int nf = 9;
+	int start = 1985;
+	int end = 2009;
+	int tsamples = ((end-start) + 1)*12; 
+	int nf = 9;
 	
-	unsigned int dim = 9;
-        unsigned int nSamples = tsamples * LAT * LON;
-
+	int dim = 9;
+        int nSamples = tsamples * LAT * LON;
+        int foffset, yoffset, moffset;
+   
 	char filename[23];
 	float *data = NULL;
 	float *dataT = NULL;
 	CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);	
-	CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
+	//CPUMALLOC((void**)&data, sizeof(float)*LAT*LON);
+        CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
 
 	printf("%d\n", nSamples*dim);
-
-	
-	unsigned int moffset, yoffset, foffset;
-	/**
- 	char filename[23];
-	for (int y =start; y<=end; y++){
-		yoffset = (LAT*LON*12) * (y-start);
-		for (int m = 1; m<=12; m++){
-			sprintf(filename, "../data/TMP_%d%02d_a.nc", y, m);
-			moffset = LAT*LON*(m-1);
-			unpack_data(filename, (data+yoffset+moffset)); 
-		}
-	}
-	**/
+   
 
 	char ffilename[25];
-	for (unsigned int f = 1; f<=9; f++){
+        int zcount=0;
+	for (int f = 1; f<=9; f++){
 		foffset = nSamples*(f-1);	
-		for (unsigned int y =start; y<=end; y++){
+		for (int y =start; y<=end; y++){
 			yoffset = (LAT*LON*12) * (y-start);
-        	 	for (unsigned int m = 1; m<=12; m++){
+        	 	for (int m = 1; m<=12; m++){
                 		sprintf(ffilename, "../data/TMP_%d%02d_f%02d.nc", y, m, f);
-				moffset = LAT*LON*(m-1);
+			        moffset = LAT*LON*(m-1);
 				unpack_data(ffilename, (data+(foffset+yoffset+moffset)));
-    	            }	
-        	}	
+			   
+			}
+		   
+		}	
 	}	
+   
+      
 	assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
 	//Transpose
 	//http://stackoverflow.com/a/16743203/1267531	
-	for(unsigned int n=0; n<(nSamples*dim); n++){
-		dataT[n] = data[nSamples*(n%dim) +(n/dim)];
+        for(unsigned int n=0; n<(nSamples*dim); n++){
+		dataT[n] = data[nSamples*(n%dim) +(n/dim)];   
 	}
+   
 	CPUFREE(data);
-	/*  Allocate enough space.. */
-	testall(dataT, nSamples, dim, DMIN, DMAX);
-	CPUFREE(dataT);
-       // test_kdtree(data, nSamples, dim);
+        /*  Allocate enough space.. */
+        uint LSH = 0;
+        uint BS = 0;
+        uint RESULT = 0;
+        if (argc>1){LSH = atoi(argv[1]);}
+        if (argc>2){BS = atoi(argv[2]);}
+        if (argc>3){RESULT = atoi(argv[3]);}
+	
+        testall(dataT, nSamples, dim, DMIN, DMAX, LSH, BS, RESULT);
+
+        //test_kdtree(data, nSamples, dim);
+        CPUFREE(dataT);
+        
 	return 0;
 }
 
