@@ -7,12 +7,12 @@ INC 	 := -I $(CUDAPATH)/cudpp/include/ -I $(CUDAPATH)/common/inc/
 LIB	 := -L $(CUDAPATH)/lib/ -L $(CUDAPATH)/common/lib/
 LDFLAGS  := -lcudpp_x86_64 -lcutil
 NCPATH   := -L ../local/netcdf/lib/ -lnetcdf -I ../local/netcdf/include/
-
+OUT      := main
 
 all:
-	$(CC) $(CCFLAGS) $(CUDASRC) $(CPPSRC) $(NCPATH) $(INC) $(LIB) $(LDFLAGS) 
+	$(CC) $(CCFLAGS) $(CUDASRC) $(CPPSRC) $(NCPATH) $(INC) $(LIB) $(LDFLAGS) -o $(OUT)
 
 silent:
-	$(CC) $(CCFLAGS) --disable-warnings $(CUDASRC) $(CPPSRC) $(NCPATH) $(INC) $(LIB) $(LDFLAGS)
+	$(CC) $(CCFLAGS) --disable-warnings $(CUDASRC) $(CPPSRC) $(NCPATH) $(INC) $(LIB) $(LDFLAGS) -o $(OUT)
 clean: 
-	rm a.out main.cpp~
+	rm $(OUT) *~ *.txt

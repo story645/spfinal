@@ -18,6 +18,7 @@
 #define VARNAME "TMP_2maboveground"
 #define DMIN 205
 #define DMAX 320
+#define MONTHS 12
 
 void unpack_data(char *filename, float *data_in);
 int main(int argc, char *argv[])
@@ -26,9 +27,10 @@ int main(int argc, char *argv[])
 	int start = 1985;
 	int end = 1986;
         //int end = 2009;
-	int tsamples = ((end-start) + 1)*12; 
+   
+	int tsamples = ((end-start) + 1)*MONTHS; 
 	int nf = 9;
-	int dim = 9;
+	int dim = nf;
         int nSamples = tsamples * LAT * LON;
         int foffset, yoffset, moffset;
    
@@ -48,7 +50,7 @@ int main(int argc, char *argv[])
 		foffset = nSamples*(f-1);	
 		for (int y =start; y<=end; y++){
 			yoffset = (LAT*LON*12) * (y-start);
-        	 	for (int m = 1; m<=12; m++){
+        	 	for (int m = 1; m<=MONTHS; m++){
                 		sprintf(ffilename, "../data/TMP_%d%02d_f%02d.nc", y, m, f);
 			        moffset = LAT*LON*(m-1);
 				unpack_data(ffilename, (data+(foffset+yoffset+moffset)));
@@ -67,6 +69,7 @@ int main(int argc, char *argv[])
 	}
    
 	CPUFREE(data);
+   
         /*  Allocate enough space.. */
         unsigned int LSH = 0;
         unsigned int BS = 0;

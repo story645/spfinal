@@ -12,7 +12,8 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 	     unsigned int BS, unsigned int LSH, unsigned int RESULT)
 {
 	unsigned int nQueries = nSamples*.20;
-	unsigned int K = 250;
+	//unsigned int K = 250;
+	unsigned int K = 12;
 	
 	printf("nSamples=%d, nQueries=%d, dims=%d, K=%d\n",
 	nSamples, nQueries, dim, K);
@@ -61,7 +62,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 	}
 
 	if(LSH ){
-	locsenhash(K, dim, nSamples, nQueries, d_data, d_query,
+	locsenhash(K, dim, dmin, dmax, nSamples, nQueries, d_data, d_query,
                    KNNResult, d_KNNResult, KNNResult_query,
                    d_KNNResult_query, RESULT);
 	}
@@ -105,8 +106,8 @@ void bruteforce(unsigned int K, unsigned int dim,
       if(RESULT){printResults("knn_query_bf2.txt", KNNResult_query, nQueries, K);}
 }
 
-void locsenhash(unsigned int K, unsigned int dim,
-            unsigned int nSamples, unsigned int nQueries,
+void locsenhash(unsigned int K, unsigned int dim, unsigned int dmin, unsigned int dmax, 
+                unsigned int nSamples, unsigned int nQueries,
 	    float* d_data, float* d_query,
 	    unsigned int* KNNResult, unsigned int* d_KNNResult,
             unsigned int* KNNResult_query, unsigned int* d_KNNResult_query, 
@@ -116,29 +117,35 @@ void locsenhash(unsigned int K, unsigned int dim,
 	    float* h_upper = NULL;
 	    CPUMALLOC((void**)&h_lower, sizeof(float) * dim);
 	    CPUMALLOC((void**)&h_upper, sizeof(float) * dim);
+	    
 	    for(unsigned int i = 0; i < dim; ++i){
-	    		 h_upper[i] = 1;
-	    		 h_lower[i] = 0;
+	    		 h_upper[i] = dmax;
+	    		 h_lower[i] = dmin;
 	    }
+	    
 	    int LSH_L = 5;
 	    
 	    //data points self query
 	    unsigned int timer1 = 0;
 	    startTimer(&timer1);
 	    proximityComputation_LSH(d_data, nSamples, d_data,
-	    				     nSamples, dim, K, LSH_L, 0.0f, h_upper, h_lower, d_KNNResult);
+	    			     nSamples, dim, K, LSH_L, 0.0f, h_upper, 
+				     h_lower, d_KNNResult);
+	    /**
 	    FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
 	    endTimer("LSH KNN -data point self query", &timer1);
 	    if(RESULT){printResults("knn_lsh.txt", KNNResult, nSamples, K);}
-
+	    
+	    
 	    unsigned int timer2 = 0;
 	    startTimer(&timer2);
 	    proximityComputation_LSH(d_data, nSamples, d_query, nQueries, dim, K,
 	                              LSH_L, 0.0f, h_upper, h_lower, d_KNNResult_query);
+	    
 	    FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	    endTimer("LSH KNN - separte data/query points", &timer2);
 	    if(RESULT){printResults("knn_query_lsh.txt", KNNResult_query, nQueries, K);}
-
+	    **/
 	   CPUFREE(h_lower);
 	   CPUFREE(h_upper); 
 }

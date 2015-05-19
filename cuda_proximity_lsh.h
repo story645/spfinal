@@ -499,7 +499,9 @@ void hashingBasedElementGrouping(unsigned int* hashValues, unsigned int* indices
 // default 	int h_P[10] = {1, 2, 5, 11, 17, 23, 31, 41, 47, 59}; and n_P = 10
 // if (M > nP) then M will be set as nP automatically
 
-void proximityComputation_LSH(float *samples, unsigned int nSamples, float* queries, unsigned int nQueries, unsigned int dim, unsigned int K, int L, float mindist, float *h_upper, float* h_lower, unsigned int *outputResult)
+void proximityComputation_LSH(float *samples, unsigned int nSamples, float* queries, unsigned int nQueries, 
+			      unsigned int dim, unsigned int K, int L, float mindist, 
+			      float *h_upper, float* h_lower, unsigned int *outputResult)
 {
 	//srand(1);
 	dim3 grid = makeGrid((int)ceilf(nSamples / (float)PROXIMITY_THREADS));
