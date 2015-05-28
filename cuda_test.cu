@@ -13,7 +13,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 {
 	unsigned int nQueries = nSamples*.20;
 	//unsigned int K = 250;
-	unsigned int K = 12;
+	unsigned int K = 5;
 	
 	printf("nSamples=%d, nQueries=%d, dims=%d, K=%d\n",
 	nSamples, nQueries, dim, K);
@@ -27,9 +27,7 @@ void testall(float *data, unsigned int nSamples, unsigned int dim,
 	CPUMALLOC((void**)&KNNResult, sizeof(unsigned int) * nSamples * K);
 	CPUMALLOC((void**)&KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	
-	
-	
-	
+		
 	//pick random samples for the queries
 	uint init;
 	uint qi = 0;
@@ -155,7 +153,7 @@ void printResults(char *filename, unsigned int* output,
      FILE * fileout = fopen(filename, "w");
      for(uint i =0; i<nLines; ++i){
      	      for(uint j=0; j < K; ++j){
-     	      	       fprintf(fileout, "%d", output[j * nLines + i]);
+     	      	       fprintf(fileout, "%d ", output[j * nLines + i]);
 	      }	       
      fprintf(fileout, "\n");
      }
