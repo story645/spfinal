@@ -39,7 +39,6 @@ int main(int argc, char *argv[]){
       nSamples = tsamples * LAT * LON;
       int foffset, yoffset, moffset;
       
-      char filename[23];
       float *data = NULL;
       CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);	
       CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
