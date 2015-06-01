@@ -9,7 +9,7 @@
 #include "cpu_test.h"
 #include "cuda_defs.h"
 
-#define DEBUG 1
+#define DEBUG 0
 #define ERRCODE 2
 #define ERR(e) {printf("Error: %s\n", nc_strerror(e)); exit(ERRCODE);}
 
@@ -21,15 +21,20 @@
 #define DMAX 320
 #define MONTHS 12
 
+//#define MAX_SIZE 25
+#define MAX_SIZE 100
+
 void unpack_data(char *filename, float *data_in, char *varname);
 int main(int argc, char *argv[]){
    
    int dmin, dmax, nSamples, dim;
-   float *dataT=NULL;
+   float *data=NULL;
    
    if (!DEBUG){
+      //FV: forecasts X (years*months*lats*lons)
       int start = 1985;
-      int end = 1986;
+      int end = 2005;
+      //int end = 1986;
       //int end = 2009;
       
       int tsamples = ((end-start) + 1)*MONTHS; 
@@ -39,12 +44,12 @@ int main(int argc, char *argv[]){
       nSamples = tsamples * LAT * LON;
       int foffset, yoffset, moffset;
       
-      float *data = NULL;
+      float *dataR=NULL;//reading in data (all data for one forecast)
+      CPUMALLOC((void**)&dataR, sizeof(float)*nSamples*dim);
       CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);	
-      CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
-      printf("%d\n", nSamples*dim);
+      printf("rows=%d, cols=%d\n", nSamples, dim);
       
-      char ffilename[25];
+      char ffilename[MAX_SIZE];
       int zcount=0;
       for (int f = 1; f<=9; f++){
 	 foffset = nSamples*(f-1);	
@@ -53,20 +58,19 @@ int main(int argc, char *argv[]){
 	    for (int m = 1; m<=MONTHS; m++){
 	       sprintf(ffilename, "../data/TMP_%d%02d_f%02d.nc", y, m, f);
 	       moffset = LAT*LON*(m-1);
-	       unpack_data(ffilename, (data+(foffset+yoffset+moffset)), VARNAME);
-	       
+	       unpack_data(ffilename, (dataR+(foffset+yoffset+moffset)), VARNAME);   
 	    }
-	    
 	 }	
       }	
       assert((foffset+yoffset+moffset+LAT*LON)==(dim*nSamples));
-      //Transpose
-      //http://stackoverflow.com/a/16743203/1267531	
-      for(unsigned int n=0; n<(nSamples*dim); n++){
-	 dataT[n] = data[nSamples*(n%dim) +(n/dim)];   
-      }
-   
-      CPUFREE(data);
+      //http://stackoverflow.com/a/16743203/1267531
+      for(unsigned int n=0; n<(nSamples*dim); n++)
+	{
+	   
+	   data[n] = dataR[nSamples*(n%dim) +(n/dim)];   
+	}
+      CPUFREE(dataR);
+      
    }else{
       //Fake data, rows of all 0s...4s
       char *sfilename = "../data/simple.nc";
@@ -75,8 +79,8 @@ int main(int argc, char *argv[]){
       dmax=4;
       nSamples = 100;
       dim = 5;
-      CPUMALLOC((void**)&dataT, sizeof(float)*nSamples*dim);
-      unpack_data(sfilename, dataT, varname);
+      CPUMALLOC((void**)&data, sizeof(float)*nSamples*dim);
+      unpack_data(sfilename, data, varname);
       /**
       for (int i=0; i<nSamples; i++){ 
 	 for(int j=0; j<dim; j++){
@@ -96,14 +100,15 @@ int main(int argc, char *argv[]){
    if (argc>2){BS = atoi(argv[2]);}
    if (argc>3){RESULT = atoi(argv[3]);}
    if (argc>4){KNN = atoi(argv[4]);}
-	
-   
-   testall(dataT, nSamples, dim, dmin, dmax, LSH, BS, RESULT);
-   if(KNN){
-      test_kdtree(dataT, nSamples, dim);
+  
+   if(LSH+BS>0){
+      testall(data, nSamples, dim, dmin, dmax, LSH, BS, RESULT);
    }
    
-   CPUFREE(dataT);
+   if(KNN){
+      test_kdtree(data, nSamples, dim);
+   }
+   CPUFREE(data);
    return 0;
 }
 

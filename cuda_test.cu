@@ -129,7 +129,7 @@ void locsenhash(unsigned int K, unsigned int dim, unsigned int dmin, unsigned in
 	    proximityComputation_LSH(d_data, nSamples, d_data,
 	    			     nSamples, dim, K, LSH_L, 0.0f, h_upper, 
 				     h_lower, d_KNNResult);
-	    /**
+				     
 	    FROMGPU(KNNResult, d_KNNResult, sizeof(unsigned int) * nSamples * K);
 	    endTimer("LSH KNN -data point self query", &timer1);
 	    if(RESULT){printResults("knn_lsh.txt", KNNResult, nSamples, K);}
@@ -143,7 +143,7 @@ void locsenhash(unsigned int K, unsigned int dim, unsigned int dmin, unsigned in
 	    FROMGPU(KNNResult_query, d_KNNResult_query, sizeof(unsigned int) * nQueries * K);
 	    endTimer("LSH KNN - separte data/query points", &timer2);
 	    if(RESULT){printResults("knn_query_lsh.txt", KNNResult_query, nQueries, K);}
-	    **/
+
 	   CPUFREE(h_lower);
 	   CPUFREE(h_upper); 
 }
